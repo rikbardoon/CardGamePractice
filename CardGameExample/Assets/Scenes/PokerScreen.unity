@@ -1814,6 +1814,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ResultText: {fileID: 1310389267}
   ReshuffleBetweenGames: 0
+  StartGameButton: {fileID: 159339557}
+  DrawButton: {fileID: 2067364510}
+  ChangeGameButton: {fileID: 85533108}
 --- !u!114 &1811036553
 MonoBehaviour:
   m_ObjectHideFlags: 0

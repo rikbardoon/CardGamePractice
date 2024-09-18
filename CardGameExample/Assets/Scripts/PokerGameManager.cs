@@ -2,18 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using System;
+using System.Security;
 
 public enum WINNING_HANDS
 {
     ROYAL_FLUSH=0,
     STRAIGHT_FLUSH,
-    4_OF_A_KIND,
+    FOUR_OF_A_KIND,
     FULL_HOUSE,
     FLUSH,
     STRAIGHT,
-    3_OF_A_KIND,
+    THREE_OF_A_KIND,
     TWO_PAIR,
     JACKS_OR_BETTER,
     NO_WIN,
@@ -33,29 +35,47 @@ public class PokerGameManager : MonoBehaviour
     List<CardInfo> playerHand;
     GameState state;
     private CardObject[] cards;
+    private PokerEvaluator evaluator;
+
     public TMP_Text ResultText;
     public bool ReshuffleBetweenGames = false;
+
+    public Button StartGameButton;
+    public Button DrawButton;
+    public Button ChangeGameButton;
 
     // Start is called before the first frame update
     void Start()
     {
-        state = GameState.GAME_IDLE;
         cards = GetComponentsInChildren<CardObject>();
         playerHand = new List<CardInfo>();
         ResultText.SetText("");
+        evaluator = new PokerEvaluator();
+        SetGameState(GameState.GAME_IDLE);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void SetGameState(GameState newState)
     {
-        
+        state = newState;
+        // Update buttons.
+        if(StartGameButton != null)
+        {
+            StartGameButton.interactable = state == GameState.GAME_IDLE;
+        }
+        if (DrawButton != null) 
+        {
+            DrawButton.interactable = state == GameState.GAME_STARTED;
+        }
+        if (ChangeGameButton != null)
+        {
+            // Only allow Change Button to show when not in the middle of a game.
+            ChangeGameButton.interactable = state == GameState.GAME_IDLE;
+        }
     }
 
     public void StartGamePressed()
     {
         // Deal Hand to player and update buttons.
-        UnityEngine.Debug.Log("Start Game button clicked.");
-
         if (state == GameState.GAME_IDLE)
         {
             playerHand.Clear();
@@ -66,13 +86,12 @@ public class PokerGameManager : MonoBehaviour
                 cards[i].SetCard(drawnCard);
             }
             ResultText.SetText("");
-            state = GameState.GAME_STARTED;
+            SetGameState(GameState.GAME_STARTED);
         }
     }
 
     public void DrawPressed()
     {
-        UnityEngine.Debug.Log("Draw button clicked.");
         // Discard In Play cards, draw new cards, and evaluate win. 
         // Update buttons.
         if(state == GameState.GAME_STARTED)
@@ -87,7 +106,7 @@ public class PokerGameManager : MonoBehaviour
                     cards[i].SetCard(newCard);
                 }
             }
-            state = GameState.GAME_EVALUATING;
+            SetGameState(GameState.GAME_EVALUATING);
         }
         EvaluateHand();
     }
@@ -97,11 +116,13 @@ public class PokerGameManager : MonoBehaviour
         if(state == GameState.GAME_EVALUATING)
         {
             // Code to evaluate the hand.
-            {
-            }
+            WINNING_HANDS handResult = evaluator.EvaluateHand(playerHand.ToArray());
 
-            ResultText.SetText("Result");
-            state = GameState.GAME_IDLE;
+            //If we wanted to implement monetary components to this game, we would add the credit rewards to the player here.
+            // We would also change the below to show the winning hand on the paytable.
+
+            ResultText.SetText(PokerEvaluator.GetWinningHandString(handResult));
+            SetGameState(GameState.GAME_IDLE);
         }
         if(ReshuffleBetweenGames)
         {
@@ -119,8 +140,6 @@ public class PokerGameManager : MonoBehaviour
 public class PokerEvaluator
 {
     private CardInfo[] Hand;
-    private int[] RankCount;
-    private int[] SuitCount;
 
     private class CardComparer : IComparer<CardInfo>
     {
@@ -141,6 +160,35 @@ public class PokerEvaluator
         }
     }
 
+    public static string GetWinningHandString(WINNING_HANDS hand_result)
+    {
+        switch(hand_result)
+        {
+            case WINNING_HANDS.ROYAL_FLUSH:
+                return "Royal Flush";
+            case WINNING_HANDS.STRAIGHT_FLUSH:
+                return "Straight Flush";
+            case WINNING_HANDS.FOUR_OF_A_KIND:
+                return "4 Of A Kind";
+            case WINNING_HANDS.FULL_HOUSE:
+                return "Full House";
+            case WINNING_HANDS.FLUSH:
+                return "Flush";
+            case WINNING_HANDS.STRAIGHT:
+                return "Straight";
+            case WINNING_HANDS.THREE_OF_A_KIND:
+                return "3 Of A Kind";
+            case WINNING_HANDS.TWO_PAIR:
+                return "Two Pair";
+            case WINNING_HANDS.JACKS_OR_BETTER:
+                return "Jacks Or Better";
+            case WINNING_HANDS.NO_WIN:
+                return "Game Over";
+            default:
+                return "Unknown";
+        }
+    }
+
     // First, we'll sort the hand into ascending rank order.
     // Count the number of re-occurring ranks
     // Count the number of each suit.
@@ -152,13 +200,9 @@ public class PokerEvaluator
     public WINNING_HANDS EvaluateHand(CardInfo[] inHand)
     {
         // Make new arrays to reset the counts to 0.
-        RankCount = new int[E_CARD_RANKS.RANK_COUNT];
-        SuitCount = new int[E_CARD_SUITS.SUIT_COUNT];
         Hand = inHand;
 
         SortHandByRank();
-        CountRanks();
-        CountSuits();
         WINNING_HANDS result = DetermineHand();
         return result;
     }
@@ -169,37 +213,6 @@ public class PokerEvaluator
         Array.Sort(Hand, cardComparer);
     }
 
-    public void CountRanks()
-    {
-        foreach(var card in Hand)
-        {
-            RankCount[(int)(card.Card_Rank)]++;
-        }
-    }
-
-    public void CountSuits()
-    {
-        foreach (var card in Hand)
-        {
-            SuitCount[(int)(card.Card_Suit)]++;
-        }
-    }
-
-    /*
- * public enum WINNING_HANDS
-{
-    ROYAL_FLUSH=0,
-    STRAIGHT_FLUSH,
-    4_OF_A_KIND,
-    FULL_HOUSE,
-    FLUSH,
-    STRAIGHT,
-    3_OF_A_KIND,
-    TWO_PAIR,
-    JACKS_OR_BETTER,
-    WINNING_HAND_COUNT
-}
- */
     public WINNING_HANDS DetermineHand()
     {
         bool flush = HasFlush();
@@ -207,7 +220,7 @@ public class PokerEvaluator
 
         if(flush && straight)
         {
-            if ((RankCount[(int)(E_CARD_RANKS.RANK_10)] == 1) && (RankCount[(int)(E_CARD_RANKS.RANK_A)] == 1))
+            if (Hand[0].Card_Rank == E_CARD_RANKS.RANK_10 && Hand[Hand.Length-1].Card_Rank == E_CARD_RANKS.RANK_A)
             {
                 // If we have a straight and it includes a 10 and an A, then we know it's a Royal Straight.
                 return WINNING_HANDS.ROYAL_FLUSH;
@@ -217,8 +230,15 @@ public class PokerEvaluator
                 return WINNING_HANDS.STRAIGHT_FLUSH;
             }
         }
-        // check 4 of a kind.
-        // check full house
+        if (Hand[0].Card_Rank == Hand[3].Card_Rank || Hand[1].Card_Rank == Hand[4].Card_Rank)
+        {
+            return WINNING_HANDS.FOUR_OF_A_KIND;
+        }
+        if ((Hand[0].Card_Rank == Hand[2].Card_Rank && Hand[3].Card_Rank == Hand[4].Card_Rank) ||
+            (Hand[0].Card_Rank == Hand[1].Card_Rank && Hand[2].Card_Rank == Hand[4].Card_Rank))
+        {
+            return WINNING_HANDS.FULL_HOUSE;
+        }
         if(flush)
         {
             return WINNING_HANDS.FLUSH;
@@ -227,60 +247,64 @@ public class PokerEvaluator
         {
             return WINNING_HANDS.STRAIGHT;
         }
-        // check 3 of a kind
-        // check two pair.
-        // check pair.
+        if (Hand[0].Card_Rank == Hand[2].Card_Rank || Hand[1].Card_Rank == Hand[3].Card_Rank || Hand[2].Card_Rank == Hand[4].Card_Rank)
+        {
+            return WINNING_HANDS.THREE_OF_A_KIND;
+        }
+        if ((Hand[0].Card_Rank == Hand[1].Card_Rank && Hand[2].Card_Rank == Hand[3].Card_Rank) ||
+            (Hand[0].Card_Rank == Hand[1].Card_Rank && Hand[3].Card_Rank == Hand[4].Card_Rank) ||
+            (Hand[1].Card_Rank == Hand[2].Card_Rank && Hand[3].Card_Rank == Hand[4].Card_Rank))
+        {
+            return WINNING_HANDS.TWO_PAIR;
+        }
+        if(Hand[0].Card_Rank == Hand[1].Card_Rank && (int)(Hand[0].Card_Rank) >= (int)(E_CARD_RANKS.RANK_J))
+        {
+            return WINNING_HANDS.JACKS_OR_BETTER;
+        }
+        if (Hand[1].Card_Rank == Hand[2].Card_Rank && (int)(Hand[1].Card_Rank) >= (int)(E_CARD_RANKS.RANK_J))
+        {
+            return WINNING_HANDS.JACKS_OR_BETTER;
+        }
+        if (Hand[2].Card_Rank == Hand[3].Card_Rank && (int)(Hand[2].Card_Rank) >= (int)(E_CARD_RANKS.RANK_J))
+        {
+            return WINNING_HANDS.JACKS_OR_BETTER;
+        }
+        if (Hand[3].Card_Rank == Hand[4].Card_Rank && (int)(Hand[3].Card_Rank) >= (int)(E_CARD_RANKS.RANK_J))
+        {
+            return WINNING_HANDS.JACKS_OR_BETTER;
+        }
 
         return WINNING_HANDS.NO_WIN;
-    }
-
-    private int GetNthMostOccuringCard(int n)
-    {
-        if (n == 0)
-            return -1;
-
-        for(int rank = 0; rank < RankCount.Length; rank++)
-        {
-
-        }
     }
 
     private bool HasStraight()
     {
         bool result = true;
-        int nCards = Hand.Length;
 
-        for (int i = 0; i < RankCount.Length; i++)
+        for(int i = 0; i < Hand.Length-1; i++)
         {
-            if (RankCount[i] == 1) 
+            if ((int)(Hand[i].Card_Rank) != (int)(Hand[i + 1].Card_Rank + 1))
             {
-                nCards--;
-            }
-            else if (RankCount[i] > 1)
-            {
-                // if > 1, then we know we can't have a straight.
-                break;
-            }
-            else if(nCards < Hand.Length)
-            {
-                // We found a card, but aren't finding one now. 
-                // Either we found all five cards, or we just broke the straight and didn't find an ascending card.
+                result = false;
                 break;
             }
         }
-        result = nCards == 0; // If we found all 5 cards, then we found a straight.
+
         return result;
     }
 
     private bool HasFlush()
     {
-        for(int i = 0; i < SuitCount.Length; i++)
+        bool result = true;
+
+        for(int i = 0; i < Hand.Length-1; i++)
         {
-            if (SuitCount[i] == Hand.Length)
+            if (Hand[i].Card_Suit != Hand[i+1].Card_Suit)
             {
-                return true;
+                result = false;
+                break;
             }
         }
-        return false;
+        return result;
     }
 }
