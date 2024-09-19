@@ -27,7 +27,6 @@ public class DeckManager : MonoBehaviour
     void Start()
     {
         DeckManager.Instance.Reset();
-        DebugPrintDeck();
     }
 
     public void Reset()

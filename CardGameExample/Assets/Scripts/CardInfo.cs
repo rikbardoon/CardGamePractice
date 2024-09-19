@@ -71,20 +71,25 @@ public class CardInfo
         return RankToString(Card_Rank) + " of " + SuitToString(Card_Suit);
     }
 
-    public static string SuitToString(E_CARD_SUITS suit)
+    public string ToShortString()
+    {
+        return RankToString(Card_Rank) + " " + SuitToString(Card_Suit, true);
+    }
+
+    public static string SuitToString(E_CARD_SUITS suit, bool isInitial = false)
     {
         switch (suit)
         {
             case E_CARD_SUITS.SUIT_CLUB:
-                return "Clubs";
+                return isInitial ? "C" : "Clubs";
             case E_CARD_SUITS.SUIT_DIAMOND:
-                return "Diamonds";
+                return isInitial ? "D" : "Diamonds";
             case E_CARD_SUITS.SUIT_SPADES:
-                return "Spades";
+                return isInitial ? "S" : "Spades";
             case E_CARD_SUITS.SUIT_HEARTS:
-                return "Hearts";
+                return isInitial ? "H" : "Hearts";
             default:
-                return "None";
+                return isInitial ? "X" : "None";
         }
     }
 

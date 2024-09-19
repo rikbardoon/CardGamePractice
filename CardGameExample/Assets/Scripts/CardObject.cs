@@ -12,7 +12,7 @@ public class CardObject : MonoBehaviour
     public TMP_Text CardText;
     public GameObject HoldIndicator;
 
-    private CardInfo Card_Information;
+    public CardInfo Card_Information;
 
     // Start is called before the first frame update
     void Start()
@@ -25,7 +25,7 @@ public class CardObject : MonoBehaviour
         }
     }
 
-    public void SetCard(CardInfo cardInfo)
+    public void SetCard(CardInfo cardInfo, bool HideCard = false)
     {
         Card_Information = cardInfo;
         Card_Suit = cardInfo.Card_Suit;
@@ -34,7 +34,14 @@ public class CardObject : MonoBehaviour
         // Update Visuals
         if(CardText)
         {
-            CardText.text = cardInfo.To_String();
+            if(HideCard)
+            {
+                CardText.text = "Hidden";
+            }
+            else
+            {
+                CardText.text = cardInfo.To_String();
+            }
         }
         if(HoldIndicator)
         {
@@ -51,12 +58,20 @@ public class CardObject : MonoBehaviour
         Card_Information.Poker_Hold = hold;
     }
 
+    public void DiscardCard()
+    {
+        if(Card_Information.Card_State != E_CARD_STATE.STATE_IN_DISCARD)
+        {
+            DeckManager.Instance.PutCardInDiscardPile(Card_Information);
+        }
+        Card_Information = null;
+    }
+
     public void CardPressed()
     {
         if (Card_Information != null)
         {
-            Card_Information.Poker_Hold = !Card_Information.Poker_Hold;
-            SetHold(Card_Information.Poker_Hold);
+            SetHold(!Card_Information.Poker_Hold);
         }
     }
 }
