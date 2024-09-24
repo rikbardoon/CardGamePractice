@@ -25,7 +25,7 @@ public class CardObject : MonoBehaviour
         }
     }
 
-    public void SetCard(CardInfo cardInfo, bool HideCard = false)
+    public void SetCard(CardInfo cardInfo, bool short_text = false, bool HideCard = false)
     {
         Card_Information = cardInfo;
         Card_Suit = cardInfo.Card_Suit;
@@ -38,9 +38,13 @@ public class CardObject : MonoBehaviour
             {
                 CardText.text = "Hidden";
             }
-            else
+            else if(!short_text)
             {
                 CardText.text = cardInfo.To_String();
+            }
+            else
+            {
+                CardText.text = cardInfo.ToShortString();
             }
         }
         if(HoldIndicator)
@@ -60,6 +64,11 @@ public class CardObject : MonoBehaviour
 
     public void DiscardCard()
     {
+        if(Card_Information == null)
+        {
+            // Do nothing, as we have no card presently.
+            return;
+        }
         if(Card_Information.Card_State != E_CARD_STATE.STATE_IN_DISCARD)
         {
             DeckManager.Instance.PutCardInDiscardPile(Card_Information);

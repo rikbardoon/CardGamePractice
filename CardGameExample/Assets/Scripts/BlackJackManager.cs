@@ -1,13 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using System;
+using System.Security;
 
 
 public class BlackJackManager : MonoBehaviour
 {
     public const int BLACK_JACK_LIMIT = 21;
 
-    private enum GameState
+    public TMP_Text Text_Result;
+
+    public enum E_GAME_STATE
     {
         GAME_IDLE = 0,
         GAME_PLAYERS_TURN,
@@ -18,11 +24,25 @@ public class BlackJackManager : MonoBehaviour
     public BlackJackHand playerHand;
     public BlackJackHand dealerHand;
 
+    public bool ReshuffleDeckBetweenHands = false;
+
+    private E_GAME_STATE CurrentGameState;
+
+    public Button StartGameButton;
+    public Button HitButton;
+    public Button StayButton;
+    public Button ChangeGameButton;
+
     // Start is called before the first frame update
     void Start()
     {
         Debug.Assert(playerHand != null, "Missing player hand object!");
         Debug.Assert(dealerHand != null, "Missing dealer hand object!");
+        if(Text_Result != null)
+        {
+            Text_Result.SetText("");
+        }
+        SetGameState(E_GAME_STATE.GAME_IDLE);
     }
 
     public void ChangeGamePressed()
@@ -33,65 +53,144 @@ public class BlackJackManager : MonoBehaviour
 
     public void StartGamePressed()
     {
-        playerHand.DrawCard(false);
-        playerHand.DrawCard(false);
+        if (CurrentGameState == E_GAME_STATE.GAME_IDLE)
+        {
+            ResetTable();
+            playerHand.DrawCard(false);
+            playerHand.DrawCard(false);
 
-        dealerHand.DrawCard(true);
-        dealerHand.DrawCard(false);
+            dealerHand.DrawCard(true);
+            dealerHand.DrawCard(false);
+
+            if(playerHand.HandValue == 21 || dealerHand.HandValue == 21)
+            {
+                // BlackJack! Just go straight to evaluation.
+                dealerHand.RevealCards();
+                EvaluateWin();
+                return;
+            }
+        }
+        SetGameState(E_GAME_STATE.GAME_PLAYERS_TURN);
     }
 
     public void HitButtonPressed()
     {
-        playerHand.DrawCard();
-        if(playerHand.HandValue > 21)
+        if(CurrentGameState == E_GAME_STATE.GAME_PLAYERS_TURN)
         {
-            // Player busts!
-            // Reveal dealer's hand?
-            // Go to end game.
+            playerHand.DrawCard();
+            if (playerHand.HandValue > 21)
+            {
+                // Player busts!
+                dealerHand.RevealCards();
+                EvaluateWin();
+            }
         }
     }
 
     public void StayButtonPressed()
     {
-        DealersTurn();
+        if(CurrentGameState == E_GAME_STATE.GAME_PLAYERS_TURN)
+        {
+            SetGameState(E_GAME_STATE.GAME_DEALERS_TURN);
+            DealersTurn();
+        }
+    }
+
+    public void SetGameState(E_GAME_STATE gameState)
+    {
+        CurrentGameState = gameState;
+        // Update buttons.
+        if (StartGameButton != null)
+        {
+            StartGameButton.interactable = CurrentGameState == E_GAME_STATE.GAME_IDLE;
+        }
+        if (HitButton != null)
+        {
+            HitButton.interactable = CurrentGameState == E_GAME_STATE.GAME_PLAYERS_TURN;
+        }
+        if(StayButton != null)
+        {
+            StayButton.interactable = CurrentGameState == E_GAME_STATE.GAME_PLAYERS_TURN;
+        }
+        if (ChangeGameButton != null)
+        {
+            // Only allow Change Button to show when not in the middle of a game.
+            ChangeGameButton.interactable = CurrentGameState == E_GAME_STATE.GAME_IDLE;
+        }
+    }
+
+    public void ResetTable()
+    {
+        playerHand.ResetHand();
+        dealerHand.ResetHand();
+
+        if (Text_Result != null)
+        {
+            Text_Result.SetText("");
+        }
+
+        if (ReshuffleDeckBetweenHands)
+        {
+            DeckManager.Instance.ShuffleDiscardToDeck();
+        }
     }
 
     public void DealersTurn()
     {
-        dealerHand.RevealCards();
-        while (dealerHand.HandValue >= 17)
+        if(CurrentGameState == E_GAME_STATE.GAME_DEALERS_TURN)
         {
-            //yield return new WaitForSeconds(2);
-            dealerHand.DrawCard();
+            dealerHand.RevealCards();
+            while (dealerHand.HandValue < 17)
+            {
+                //yield return new WaitForSeconds(2);
+                dealerHand.DrawCard();
+            }
         }
+        EvaluateWin();
     }
 
     public void EvaluateWin()
     {
-        if(playerHand.HandValue  > 21)
+        bool playerBlackJack = playerHand.HandValue == 21 && playerHand.CardCount == 2;
+        bool dealerBlackJack = dealerHand.HandValue == 21 && dealerHand.CardCount == 2;
+
+        if (playerBlackJack && dealerBlackJack)
+        {
+            Text_Result.SetText("BlackJack!\nTie!");
+        }
+        else if(dealerBlackJack)
+        {
+            Text_Result.SetText("BlackJack!\nDealer Wins");
+        }
+        else if(playerBlackJack)
+        {
+            Text_Result.SetText("BlackJack!\nPlayer Wins");
+        }
+        else if (playerHand.HandValue  > 21)
         {
             // Player busts!
-            // go to end game.
+            Text_Result.SetText("PLAYER BUSTS!\nDealer Wins!");
         }
-        if (dealerHand.HandValue > 21)
+        else if (dealerHand.HandValue > 21)
         {
             // Dealer busts!
-            // go to end game.
+            Text_Result.SetText("DEALER BUSTS!\nPlayer Wins");
         }
         else if (dealerHand.HandValue > playerHand.HandValue)
         {
             // Dealer wins.
-            // go to end game.
+            Text_Result.SetText("Dealer Wins!");
         }
         else if (playerHand.HandValue > dealerHand.HandValue)
         {
             // Player wins.
-            // go to end game.
+            Text_Result.SetText("Player Wins!");
         }
         else
         {
             // It's a push!
-            // go to end game.
+            Text_Result.SetText("Tie!");
         }
+        SetGameState(E_GAME_STATE.GAME_IDLE);
     }
 }

@@ -1,24 +1,43 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class BlackJackHand : MonoBehaviour
 {
     public int HandValue {  get; private set; }
+    public int CardCount { get { return numCardsInHand; } }
 
     public bool isDealerHand;
+    public GameObject HandValueDisplay;
 
     private CardObject[] cards;
     private int numCardsInHand;
     private int UnconvertedAceCount;
+    private TMP_Text handValueDisplayText;
+    private bool isHandRevealed;
+    private string handValueDisplayText_prompt;
 
     void Start()
     {
         cards = GetComponentsInChildren<CardObject>();
         Debug.Assert(cards != null && cards.Length > 0, "Missing Card Objects!");
-        numCardsInHand = 0;
+        numCardsInHand = cards.Length;
         UnconvertedAceCount = 0;
         HandValue = 0;
+        if(HandValueDisplay != null)
+        {
+            handValueDisplayText = HandValueDisplay.GetComponent<TMP_Text>();
+            if(isDealerHand)
+            {
+                handValueDisplayText_prompt = "Dealer's Hand: ";
+            }
+            else
+            {
+                handValueDisplayText_prompt = "Player's Hand: ";
+            }
+        }
+        ResetHand();
     }
 
     public void ResetHand()
@@ -30,6 +49,12 @@ public class BlackJackHand : MonoBehaviour
         }
         numCardsInHand = 0;
         UnconvertedAceCount = 0;
+        HandValue = 0;
+        isHandRevealed = false;
+        if (HandValueDisplay != null)
+        {
+            HandValueDisplay.SetActive(false);
+        }
     }
 
     public void DrawCard(bool HideCard = false)
@@ -37,7 +62,7 @@ public class BlackJackHand : MonoBehaviour
         Debug.Assert(numCardsInHand < cards.Length);
         CardInfo newCardInformation = DeckManager.Instance.DrawCard();
         cards[numCardsInHand].gameObject.SetActive(true);
-        cards[numCardsInHand].SetCard(newCardInformation, HideCard);
+        cards[numCardsInHand].SetCard(newCardInformation, true, HideCard);
         numCardsInHand++;
 
         if(newCardInformation.Card_Rank == E_CARD_RANKS.RANK_A)
@@ -52,8 +77,10 @@ public class BlackJackHand : MonoBehaviour
     {
         for(int i = 0; i < numCardsInHand; i++)
         {
-            cards[i].SetCard(cards[i].Card_Information, false);
+            cards[i].SetCard(cards[i].Card_Information, true, false);
         }
+        isHandRevealed = true;
+        HandValueDisplay.SetActive(true);
     }
 
     public void UpdateHandValue()
@@ -62,6 +89,15 @@ public class BlackJackHand : MonoBehaviour
         {
             HandValue -= 10;
             UnconvertedAceCount -= 1;
+        }
+        if (handValueDisplayText != null)
+        {
+            if(!HandValueDisplay.activeInHierarchy && !isDealerHand)
+            {
+                // If this is the player's hand, and we're not currently visible, make us visible.
+                HandValueDisplay.SetActive(true);
+            }
+            handValueDisplayText.SetText(handValueDisplayText_prompt + HandValue.ToString());
         }
     }
 
