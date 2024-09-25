@@ -1,13 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
+
+using Object = UnityEngine.Object;
 
 public class DeckManager : MonoBehaviour
 {
     static public DeckManager Instance { get; private set; }
+    static public Texture2D CardBackTexture { get; private set; }
 
     private Stack<CardInfo> Deck;
     private List<CardInfo> DiscardPile;
@@ -16,20 +18,23 @@ public class DeckManager : MonoBehaviour
     {
         if(Instance != null && Instance != this)
         {
-            Destroy(this);
+            Destroy(this.gameObject);
         }
         else
         {
             Instance = this;
+            DontDestroyOnLoad(this.gameObject);
         }
     }
 
     void Start()
     {
-        DeckManager.Instance.Reset();
+        //CardImages = Resources.LoadAll("CardImages", typeof(Texture2D)); 
+        DeckManager.Instance.Initialize();
+        CardBackTexture = Resources.Load<Texture2D>("CardImages/card-back01");
     }
 
-    public void Reset()
+    public void Initialize()
     {
         Deck = new Stack<CardInfo>();
         DiscardPile = new List<CardInfo>();
@@ -37,17 +42,14 @@ public class DeckManager : MonoBehaviour
         int numCardOptions = (int)(E_CARD_SUITS.SUIT_COUNT) * (int)(E_CARD_RANKS.RANK_COUNT);
 
         // Add cards to discard pile.
-        for(int i = 0; i < numCardOptions; i++)
+        for (int i = 0; i < numCardOptions; i++)
         {
             CardInfo newCard = new CardInfo(i);
             DiscardPile.Add(newCard);
         }
-
-        // Shuffle Discard into Deck.
-        ShuffleDiscardToDeck();
     }
 
-    public void ShuffleDiscardToDeck()
+    public void ResetDeck()
     {
         UnityEngine.Debug.Assert(Deck != null, "Deck is uninitialized.");
         UnityEngine.Debug.Assert(DiscardPile != null, "Discard Pile is uninitialized.");
@@ -75,7 +77,7 @@ public class DeckManager : MonoBehaviour
     {
         if(Deck.Count <= 0)
         {
-            ShuffleDiscardToDeck();
+            ResetDeck();
         }
 
         CardInfo DrawnCard = Deck.Pop();
@@ -107,4 +109,5 @@ public class DeckManager : MonoBehaviour
 
         UnityEngine.Debug.Log(logMsg);
     }
+
 }

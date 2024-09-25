@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 using System;
 using System.Security;
@@ -51,6 +52,7 @@ public class PokerGameManager : MonoBehaviour
         playerHand = new List<CardInfo>();
         ResultText.SetText("");
         evaluator = new PokerEvaluator();
+        DeckManager.Instance.ResetDeck(); // Let's reset the deck manager whenever this game loads.
         SetGameState(GameState.GAME_IDLE);
     }
 
@@ -78,7 +80,7 @@ public class PokerGameManager : MonoBehaviour
         // Deal Hand to player and update buttons.
         if (state == GameState.GAME_IDLE)
         {
-            playerHand.Clear();
+            ResetHand();
             for (int i = 0; i < cards.Length; i++)
             {
                 CardInfo drawnCard = DeckManager.Instance.DrawCard();
@@ -100,7 +102,7 @@ public class PokerGameManager : MonoBehaviour
             {
                 if (playerHand[i] != null && !playerHand[i].Poker_Hold)
                 {
-                    DeckManager.Instance.PutCardInDiscardPile(playerHand[i]);
+                    cards[i].DiscardCard();
                     CardInfo newCard = DeckManager.Instance.DrawCard();
                     playerHand[i] = newCard;
                     cards[i].SetCard(newCard);
@@ -109,6 +111,16 @@ public class PokerGameManager : MonoBehaviour
             SetGameState(GameState.GAME_EVALUATING);
         }
         EvaluateHand();
+    }
+
+    public void ResetHand()
+    {
+        // We need to actively discard the cards to ensure they end up in our discard pile and are reshuffled into the deck.
+        for(int i = 0; i < cards.Length; i++)
+        {
+            cards[i].DiscardCard();
+        }
+        playerHand.Clear();
     }
 
     public void EvaluateHand()
@@ -126,14 +138,15 @@ public class PokerGameManager : MonoBehaviour
         }
         if(ReshuffleBetweenGames)
         {
-            DeckManager.Instance.ShuffleDiscardToDeck();
+            DeckManager.Instance.ResetDeck();
         }
     }
 
     public void ChangeGamePressed()
     {
+        ResetHand();
         // Change to main screen for game selection.
-        UnityEngine.Debug.Log("Change Game button pressed");
+        SceneManager.LoadScene("SelectionScreen");
     }
 }
 

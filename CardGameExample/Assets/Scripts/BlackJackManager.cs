@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 using System;
 using System.Security;
@@ -42,13 +43,16 @@ public class BlackJackManager : MonoBehaviour
         {
             Text_Result.SetText("");
         }
+        DeckManager.Instance.ResetDeck(); // Let's reset the deck manager whenever this game loads.
         SetGameState(E_GAME_STATE.GAME_IDLE);
     }
 
     public void ChangeGamePressed()
     {
+        // Reset so the cards are discarded.
+        ResetTable();
         // Change to main screen for game selection.
-        UnityEngine.Debug.Log("Change Game button pressed");
+        SceneManager.LoadScene("SelectionScreen");
     }
 
     public void StartGamePressed()
@@ -131,7 +135,7 @@ public class BlackJackManager : MonoBehaviour
 
         if (ReshuffleDeckBetweenHands)
         {
-            DeckManager.Instance.ShuffleDiscardToDeck();
+            DeckManager.Instance.ResetDeck();
         }
     }
 

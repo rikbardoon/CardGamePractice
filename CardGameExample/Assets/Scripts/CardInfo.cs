@@ -47,6 +47,7 @@ public class CardInfo
     public E_CARD_RANKS Card_Rank;
     public E_CARD_STATE Card_State;
     public bool Poker_Hold;
+    public Texture2D Card_Image;
 
     public CardInfo(int cardId)
     {
@@ -54,6 +55,7 @@ public class CardInfo
         Card_Suit = (E_CARD_SUITS)(cardId / (int)E_CARD_RANKS.RANK_COUNT);
         Card_Rank = (E_CARD_RANKS)(cardId % (int)E_CARD_RANKS.RANK_COUNT);
         Card_State = E_CARD_STATE.STATE_IN_DECK;
+        Card_Image = Resources.Load<Texture2D>(GetImageFileName());
         Poker_Hold = false;
     }
 
@@ -141,5 +143,77 @@ public class CardInfo
             default:
                 return "Not Set";
         }
+    }
+
+    public string GetImageFileName()
+    {
+        string fileName = "CardImages/" + SuitToString(Card_Suit) + "/";
+
+        switch(Card_Suit)
+        {
+            case E_CARD_SUITS.SUIT_CLUB:
+                fileName += "clubs";
+                break;
+            case E_CARD_SUITS.SUIT_DIAMOND:
+                fileName += "diamond";
+                break;
+            case E_CARD_SUITS.SUIT_HEARTS:
+                fileName += "heart";
+                break;
+            case E_CARD_SUITS.SUIT_SPADES:
+                fileName += "spade";
+                break;
+            default:
+                UnityEngine.Debug.LogError("Unable to find image file name. Unknown Card Suit.");
+                return "";
+        }
+
+        switch(Card_Rank)
+        {
+            case E_CARD_RANKS.RANK_A:
+                fileName += "01";
+                break;
+            case E_CARD_RANKS.RANK_2:
+                fileName += "02";
+                break;
+            case E_CARD_RANKS.RANK_3:
+                fileName += "03";
+                break;
+            case E_CARD_RANKS.RANK_4:
+                fileName += "04";
+                break;
+            case E_CARD_RANKS.RANK_5:
+                fileName += "05";
+                break;
+            case E_CARD_RANKS.RANK_6:
+                fileName += "06";
+                break;
+            case E_CARD_RANKS.RANK_7:
+                fileName += "07";
+                break;
+            case E_CARD_RANKS.RANK_8:
+                fileName += "08";
+                break;
+            case E_CARD_RANKS.RANK_9:
+                fileName += "09";
+                break;
+            case E_CARD_RANKS.RANK_10:
+                fileName += "10";
+                break;
+            case E_CARD_RANKS.RANK_J:
+                fileName += "11";
+                break;
+            case E_CARD_RANKS.RANK_Q:
+                fileName += "12";
+                break;
+            case E_CARD_RANKS.RANK_K:
+                fileName += "13";
+                break;
+            default:
+                UnityEngine.Debug.LogError("Unable to find image file name. Unknown Card Rank.");
+                return "";
+        }
+
+        return fileName;
     }
 }

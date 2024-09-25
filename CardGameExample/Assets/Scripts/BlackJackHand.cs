@@ -15,7 +15,6 @@ public class BlackJackHand : MonoBehaviour
     private int numCardsInHand;
     private int UnconvertedAceCount;
     private TMP_Text handValueDisplayText;
-    private bool isHandRevealed;
     private string handValueDisplayText_prompt;
 
     void Start()
@@ -50,7 +49,6 @@ public class BlackJackHand : MonoBehaviour
         numCardsInHand = 0;
         UnconvertedAceCount = 0;
         HandValue = 0;
-        isHandRevealed = false;
         if (HandValueDisplay != null)
         {
             HandValueDisplay.SetActive(false);
@@ -79,7 +77,6 @@ public class BlackJackHand : MonoBehaviour
         {
             cards[i].SetCard(cards[i].Card_Information, true, false);
         }
-        isHandRevealed = true;
         HandValueDisplay.SetActive(true);
     }
 

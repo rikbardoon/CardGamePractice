@@ -2,7 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
+using System.Reflection;
 
 public class CardObject : MonoBehaviour
 {
@@ -13,6 +15,13 @@ public class CardObject : MonoBehaviour
     public GameObject HoldIndicator;
 
     public CardInfo Card_Information;
+
+    private RawImage Card_Image;
+
+    void Awake()
+    {
+        Card_Image = gameObject.GetComponent<RawImage>();
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -32,8 +41,22 @@ public class CardObject : MonoBehaviour
         Card_Rank = cardInfo.Card_Rank;
 
         // Update Visuals
-        if(CardText)
+        if (Card_Image != null)
         {
+            if(HideCard)
+            {
+                Card_Image.texture = DeckManager.CardBackTexture;
+            }
+            else
+            {
+                Card_Image.texture = cardInfo.Card_Image;
+            }
+            // Since we have an image, we don't need the text.
+            CardText.gameObject.SetActive(false);
+        }
+        else if (CardText != null) // Since we don't have an image, we'll just use text instead.
+        {
+            UnityEngine.Debug.LogWarning("No RawImage found! Defaulting to text instead.");
             if(HideCard)
             {
                 CardText.text = "Hidden";
@@ -47,7 +70,7 @@ public class CardObject : MonoBehaviour
                 CardText.text = cardInfo.ToShortString();
             }
         }
-        if(HoldIndicator)
+        if(HoldIndicator != null)
         {
             HoldIndicator.SetActive(cardInfo.Poker_Hold);
         }
