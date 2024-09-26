@@ -1,0 +1,7 @@
+This is a project developed to simulate a virtual poker and black jack game. Both games use a single deck, which is reset when switching games. To avoid overcomplication in the game and code, no betting system was implemented and this project focuses purely on implementing the gameplay instead.
+
+Virtual Poker uses 5-Card Draw and wins on a Jacks or Better pair, or better ranked hand. 
+*I am fairly familiar with Poker, so this was relatively easy to implement. I originally was going to implement the standard paytable seen on most GameKing builds, but I quickly realized that if I don't have a betting system implemented, it would look very strange. So, while I implemented everything else from IGT's Game King build, I did not implement the paytable.*
+
+Black Jack is a basic Black Jack and will allow you to keep hitting until you Stay or Bust. Upon Stay, the dealer's hand is revealed and automatically hits until 17 or higher. If either side has BlackJack, then the game is immediately resolved and the winner declared. Due to there not being a betting system, Double Down, Insurance and Splitting are not implemented. 
+*I have less familiarity with virtual black jack, so this was a bit trickier to implement. I noted that the maximum number of cards a single hand could have before bust is 11 cards, so I made sure I could put 12 cards on screen, just in case. Because of that, the game screen can look very crowded in the editor, but it looks better during gameplay.*
